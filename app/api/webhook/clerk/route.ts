@@ -69,19 +69,24 @@ export async function POST(req: Request) {
 
     console.log('Creating user:', user);
 
-    const newUser = await createUser(user);
+    try {
+      const newUser = await createUser(user);
 
-    console.log('User created in MongoDB:', newUser);
+      console.log('User created in MongoDB:', newUser);
 
-    if(newUser) {
-      await clerkClient.users.updateUserMetadata(id, {
-        publicMetadata: {
-          userId: newUser._id
-        }
-      })
+      if(newUser) {
+        await clerkClient.users.updateUserMetadata(id, {
+          publicMetadata: {
+            userId: newUser._id
+          }
+        })
+      }
+
+      return NextResponse.json({ message: 'OK', user: newUser })
+    } catch (error) {
+      console.error('Error in user.created webhook:', error);
+      return NextResponse.json({ message: 'Error creating user', error: String(error) }, { status: 500 })
     }
-
-    return NextResponse.json({ message: 'OK', user: newUser })
   }
 
   if (eventType === 'user.updated') {

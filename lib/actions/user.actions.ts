@@ -20,7 +20,7 @@ export async function createUser(user: CreateUserParams) {
     return JSON.parse(JSON.stringify(newUser))
   } catch (error) {
     console.error('Error creating user:', error)
-    handleError(error)
+    throw error; // Re-throw so the webhook can handle it
   }
 }
 
