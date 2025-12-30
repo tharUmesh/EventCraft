@@ -1,17 +1,18 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
-const isDashboardRoute = createRouteMatcher([
-    
+const isPublicRoute = createRouteMatcher([
+    '/',
+    '/api/webhook/clerk',
     '/api/webhook/stripe',
-    '/api/uploadthing'
-]
+    '/api/uploadthing',
+    '/sign-in(.*)',
+    '/sign-up(.*)',
+]);
 
-);
-
-export default clerkMiddleware((auth, req) => {
-
-  // Restrict dashboard routes to signed in users
-  if (isDashboardRoute(req)) auth().protect();
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req)) {
+    await auth.protect();
+  }
 });
 
 export const config = {
