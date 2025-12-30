@@ -19,12 +19,22 @@ const config = {
     },
     extend: {
       colors: {
+        primary: {
+          500: '#624CF5',
+          50: '#F6F8FD',
+        },
+        grey: {
+          600: '#545454', 
+          500: '#757575',
+          400: '#AFAFAF',
+          50: '#F6F6F6'
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        primary: {
+        "primary-old": {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
         },
