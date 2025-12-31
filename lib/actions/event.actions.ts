@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { currentUser } from '@clerk/nextjs/server'
 
 import { connectToDatabase } from '@/lib/database'
 import Event from '@/lib/database/models/event.model'
@@ -32,10 +33,29 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
   try {
     await connectToDatabase()
 
-    const organizer = await User.findById(userId)
+    // Find user by clerkId
+    let organizer = await User.findOne({ clerkId: userId })
+    
+    // If organizer not found, try to sync from Clerk
+    if (!organizer) {
+      const clerkUser = await currentUser()
+      if (clerkUser) {
+        // Create user in MongoDB from Clerk data
+        organizer = await User.create({
+          clerkId: clerkUser.id,
+          email: clerkUser.emailAddresses[0]?.emailAddress,
+          username: clerkUser.username || clerkUser.emailAddresses[0]?.emailAddress.split('@')[0],
+          firstName: clerkUser.firstName || '',
+          lastName: clerkUser.lastName || '',
+          photo: clerkUser.imageUrl,
+        })
+        console.log('Auto-synced user from Clerk:', organizer._id)
+      }
+    }
+    
     if (!organizer) throw new Error('Organizer not found')
 
-    const newEvent = await Event.create({ ...event, category: event.categoryId, organizer: userId })
+    const newEvent = await Event.create({ ...event, category: event.categoryId, organizer: organizer._id })
     revalidatePath(path)
 
     return JSON.parse(JSON.stringify(newEvent))
