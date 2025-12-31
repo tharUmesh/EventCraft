@@ -9,12 +9,15 @@ export const connectToDatabase = async () => {
 
   if(!MONGODB_URI) throw new Error('MONGODB_URI is missing');
 
+  console.log('Connecting to MongoDB with URI:', MONGODB_URI?.replace(/\/\/([^:]+):([^@]+)@/, '//$1:****@'));
+
   cached.promise = cached.promise || mongoose.connect(MONGODB_URI, {
-    dbName: 'eventcraftdb',
     bufferCommands: false,
   })
 
   cached.conn = await cached.promise;
+  
+  console.log('Connected to database:', cached.conn.connection.db.databaseName);
 
   return cached.conn;
 }

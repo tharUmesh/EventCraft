@@ -1,6 +1,5 @@
-import Image from 'next/image'
-import Link from 'next/link'
-import React from 'react'
+import Image from "next/image"
+import Link from "next/link"
 
 const Footer = () => {
   return (
@@ -15,7 +14,7 @@ const Footer = () => {
           />
         </Link>
 
-        <p>2025 EventCraft. All Rights reserved.</p>
+        <p>2023 Evently. All Rights reserved.</p>
       </div>
     </footer>
   )

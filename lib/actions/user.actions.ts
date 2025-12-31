@@ -1,3 +1,5 @@
+'use server'
+
 import { revalidatePath } from 'next/cache'
 
 import { connectToDatabase } from '@/lib/database'
@@ -10,17 +12,12 @@ import { CreateUserParams, UpdateUserParams } from '@/types'
 
 export async function createUser(user: CreateUserParams) {
   try {
-    console.log('Connecting to database...')
     await connectToDatabase()
-    console.log('Connected to database successfully')
 
-    console.log('Creating user with data:', user)
     const newUser = await User.create(user)
-    console.log('User created successfully:', newUser)
     return JSON.parse(JSON.stringify(newUser))
   } catch (error) {
-    console.error('Error creating user:', error)
-    throw error; // Re-throw so the webhook can handle it
+    handleError(error)
   }
 }
 

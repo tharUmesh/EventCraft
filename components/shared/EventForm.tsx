@@ -52,19 +52,13 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
     let uploadedImageUrl = values.imageUrl;
 
     if(files.length > 0) {
-      try {
-        const uploadedImages = await startUpload(files)
+      const uploadedImages = await startUpload(files)
 
-        if(!uploadedImages) {
-          console.log('Upload failed - using default image')
-          uploadedImageUrl = 'https://via.placeholder.com/400x300?text=Event+Image'
-        } else {
-          uploadedImageUrl = uploadedImages[0].url
-        }
-      } catch (error) {
-        console.error('Upload error:', error)
-        uploadedImageUrl = 'https://via.placeholder.com/400x300?text=Event+Image'
+      if(!uploadedImages) {
+        return
       }
+
+      uploadedImageUrl = uploadedImages[0].url
     }
 
     if(type === 'Create') {
@@ -211,7 +205,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                       <p className="ml-3 whitespace-nowrap text-grey-600">Start Date:</p>
                       <DatePicker 
                         selected={field.value} 
-                        onChange={(date: Date | null) => field.onChange(date || new Date())} 
+                        onChange={(date: Date) => field.onChange(date)} 
                         showTimeSelect
                         timeInputLabel="Time:"
                         dateFormat="MM/dd/yyyy h:mm aa"
@@ -242,7 +236,7 @@ const EventForm = ({ userId, type, event, eventId }: EventFormProps) => {
                       <p className="ml-3 whitespace-nowrap text-grey-600">End Date:</p>
                       <DatePicker 
                         selected={field.value} 
-                        onChange={(date: Date | null) => field.onChange(date || new Date())} 
+                        onChange={(date: Date) => field.onChange(date)} 
                         showTimeSelect
                         timeInputLabel="Time:"
                         dateFormat="MM/dd/yyyy h:mm aa"
