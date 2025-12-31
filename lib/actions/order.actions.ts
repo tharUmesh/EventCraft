@@ -121,8 +121,14 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
   try {
     await connectToDatabase()
 
+    // Find user by clerkId to get their MongoDB _id
+    const user = await User.findOne({ clerkId: userId })
+    if (!user) {
+      return { data: [], totalPages: 0 }
+    }
+
     const skipAmount = (Number(page) - 1) * limit
-    const conditions = { buyer: userId }
+    const conditions = { buyer: user._id }
 
     const orders = await Order.distinct('event._id')
       .find(conditions)
@@ -135,7 +141,7 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
         populate: {
           path: 'organizer',
           model: User,
-          select: '_id firstName lastName',
+          select: '_id clerkId firstName lastName',
         },
       })
 

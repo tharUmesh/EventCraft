@@ -24,7 +24,7 @@ const getCategoryByName = async (name: string) => {
 
 const populateEvent = (query: any) => {
   return query
-    .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
+    .populate({ path: 'organizer', model: User, select: '_id clerkId firstName lastName' })
     .populate({ path: 'category', model: Category, select: '_id name' })
 }
 
@@ -40,15 +40,23 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
     if (!organizer) {
       const clerkUser = await currentUser()
       if (clerkUser) {
-        // Create user in MongoDB from Clerk data
-        organizer = await User.create({
-          clerkId: clerkUser.id,
-          email: clerkUser.emailAddresses[0]?.emailAddress,
-          username: clerkUser.username || clerkUser.emailAddresses[0]?.emailAddress.split('@')[0],
-          firstName: clerkUser.firstName || '',
-          lastName: clerkUser.lastName || '',
-          photo: clerkUser.imageUrl,
-        })
+        const email = clerkUser.emailAddresses[0]?.emailAddress
+        
+        // Use findOneAndUpdate with upsert to handle existing users
+        organizer = await User.findOneAndUpdate(
+          { $or: [{ clerkId: clerkUser.id }, { email }] },
+          {
+            $set: {
+              clerkId: clerkUser.id,
+              email,
+              username: clerkUser.username || email?.split('@')[0],
+              firstName: clerkUser.firstName || '',
+              lastName: clerkUser.lastName || '',
+              photo: clerkUser.imageUrl,
+            }
+          },
+          { upsert: true, new: true }
+        )
         console.log('Auto-synced user from Clerk:', organizer._id)
       }
     }
@@ -84,8 +92,14 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
   try {
     await connectToDatabase()
 
+    // Find user by clerkId to get their MongoDB _id
+    const user = await User.findOne({ clerkId: userId })
+    if (!user) {
+      throw new Error('User not found')
+    }
+
     const eventToUpdate = await Event.findById(event._id)
-    if (!eventToUpdate || eventToUpdate.organizer.toHexString() !== userId) {
+    if (!eventToUpdate || eventToUpdate.organizer.toHexString() !== user._id.toHexString()) {
       throw new Error('Unauthorized or event not found')
     }
 
@@ -148,7 +162,13 @@ export async function getEventsByUser({ userId, limit = 6, page }: GetEventsByUs
   try {
     await connectToDatabase()
 
-    const conditions = { organizer: userId }
+    // Find user by clerkId to get their MongoDB _id
+    const user = await User.findOne({ clerkId: userId })
+    if (!user) {
+      return { data: [], totalPages: 0 }
+    }
+
+    const conditions = { organizer: user._id }
     const skipAmount = (page - 1) * limit
 
     const eventsQuery = Event.find(conditions)
